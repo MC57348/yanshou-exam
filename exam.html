@@ -1,0 +1,1738 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>随机测试 - 科目一模式</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, "Microsoft YaHei", sans-serif;
+            background: #f0f2f5;
+            padding: 20px;
+            color: #1e2a3a;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            padding: 30px 35px;
+        }
+        
+        /* ===== 导航栏 ===== */
+        .navbar {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e1e4e8;
+            margin-bottom: 20px;
+        }
+        .navbar a {
+            color: #0366d6;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 15px;
+            padding: 6px 14px;
+            border-radius: 6px;
+            transition: background 0.15s;
+        }
+        .navbar a:hover {
+            background: #f0f6ff;
+        }
+        .navbar a.active {
+            background: #0366d6;
+            color: #fff;
+        }
+        .navbar a.active:hover {
+            background: #0255b3;
+        }
+        .navbar .spacer {
+            flex: 1;
+        }
+        .navbar .badge {
+            font-size: 13px;
+            color: #57606a;
+        }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
+        .header .title { font-size: 18px; font-weight: 600; }
+        .header .score { font-size: 16px; color: #0550ae; font-weight: 500; }
+        .header .score span { font-size: 22px; font-weight: 700; }
+        .progress-wrap { background: #e9ecef; border-radius: 10px; height: 8px; margin-bottom: 20px; overflow: hidden; }
+        .progress-bar { height: 100%; background: #0366d6; border-radius: 10px; transition: width 0.3s ease; width: 0%; }
+        .q-type { display: inline-block; font-size: 13px; font-weight: 600; padding: 3px 14px; border-radius: 20px; margin-bottom: 12px; }
+        .q-type.单选 { background: #ddf4ff; color: #0550ae; }
+        .q-type.多选 { background: #dafbe1; color: #116329; }
+        .q-type.判断 { background: #fff8c5; color: #7a5d00; }
+        .q-number { font-size: 14px; color: #57606a; margin-bottom: 4px; }
+        .q-text { font-size: 18px; line-height: 1.7; margin-bottom: 18px; font-weight: 500; }
+        .options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+        .option-item {
+            padding: 14px 18px;
+            border: 2px solid #e1e4e8;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            user-select: none;
+        }
+        .option-item:hover { border-color: #8b949e; background: #f6f8fa; }
+        .option-item .letter { font-weight: 700; color: #57606a; min-width: 24px; }
+        .option-item.selected { border-color: #0366d6; background: #f0f6ff; }
+        .option-item.selected .letter { color: #0366d6; }
+        .option-item.correct { border-color: #1a7f37; background: #dafbe1; }
+        .option-item.correct .letter { color: #1a7f37; }
+        .option-item.wrong { border-color: #cf222e; background: #ffebe9; }
+        .option-item.wrong .letter { color: #cf222e; }
+        .option-item.disabled { cursor: not-allowed; opacity: 0.7; }
+        .option-item.disabled:hover { border-color: #e1e4e8; background: transparent; }
+        .multi-hint { font-size: 14px; color: #57606a; margin-bottom: 12px; }
+        .actions { display: flex; gap: 12px; margin-top: 10px; flex-wrap: wrap; }
+        .actions button { padding: 12px 32px; border: none; border-radius: 10px; font-size: 16px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+        .btn-submit { background: #0366d6; color: #fff; }
+        .btn-submit:hover { background: #0255b3; }
+        .btn-submit:disabled { background: #8b949e; cursor: not-allowed; }
+        .btn-next { background: #e1e4e8; color: #24292e; }
+        .btn-next:hover { background: #d0d7de; }
+        .btn-restart { background: #e1e4e8; color: #24292e; }
+        .btn-restart:hover { background: #d0d7de; }
+        .feedback { margin-top: 14px; padding: 12px 18px; border-radius: 10px; font-size: 15px; font-weight: 500; display: none; }
+        .feedback.show { display: block; }
+        .feedback.correct { background: #dafbe1; color: #1a7f37; }
+        .feedback.wrong { background: #ffebe9; color: #cf222e; }
+        .feedback .answer-detail { font-weight: 400; margin-top: 4px; font-size: 14px; }
+        .result { display: none; }
+        .result.show { display: block; }
+        .result .big-score { text-align: center; padding: 30px 0; }
+        .result .big-score .num { font-size: 64px; font-weight: 700; color: #0366d6; }
+        .result .big-score .label { font-size: 18px; color: #57606a; }
+        .result .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; margin: 20px 0 30px; }
+        .result .stat-card { background: #f6f8fa; padding: 16px; border-radius: 12px; text-align: center; }
+        .result .stat-card .num { font-size: 28px; font-weight: 700; }
+        .result .stat-card .label { font-size: 13px; color: #57606a; margin-top: 2px; }
+        .result .stat-card.green .num { color: #1a7f37; }
+        .result .stat-card.red .num { color: #cf222e; }
+        .result .stat-card.blue .num { color: #0366d6; }
+        .result .wrong-list { margin-top: 20px; border-top: 1px solid #e1e4e8; padding-top: 20px; }
+        .result .wrong-list h3 { font-size: 16px; margin-bottom: 12px; }
+        .result .wrong-item { background: #f6f8fa; padding: 14px 16px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #cf222e; }
+        .result .wrong-item .w-q { font-size: 15px; font-weight: 500; }
+        .result .wrong-item .w-detail { font-size: 14px; color: #57606a; margin-top: 4px; }
+        .result .wrong-item .w-detail .wrong-ans { color: #cf222e; font-weight: 600; }
+        .result .wrong-item .w-detail .right-ans { color: #1a7f37; font-weight: 600; }
+        @media (max-width: 600px) { .container { padding: 20px; } .q-text { font-size: 16px; } .option-item { padding: 12px 14px; font-size: 15px; } .header .title { font-size: 16px; } }
+    </style>
+</head>
+<body>
+<div class="container" id="app">
+    <!-- ===== 导航栏 ===== -->
+    <div class="navbar">
+        <a href="index.html">🔍 搜索题库</a>
+        <a href="exam.html" class="active">📝 随机测试</a>
+        <span class="spacer"></span>
+        <span class="badge">📚 题库搜索 &amp; 在线练习</span>
+    </div>
+
+    <div class="header">
+        <div class="title">📝 随机测试</div>
+        <div class="score">✅ <span id="scoreNum">0</span> 分 &nbsp;|&nbsp; 📊 <span id="progressText">0/100</span></div>
+    </div>
+    <div class="progress-wrap">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div id="examArea">
+        <div class="q-type" id="qType">单选</div>
+        <div class="q-number" id="qNumber">第 1 题</div>
+        <div class="q-text" id="qText">题目加载中...</div>
+        <div class="options" id="optionsContainer"></div>
+        <div class="multi-hint" id="multiHint" style="display:none;">💡 多选题请选择所有正确选项后点击「确认答案」</div>
+        <div class="feedback" id="feedback"></div>
+        <div class="actions">
+            <button class="btn-submit" id="btnSubmit" onclick="submitAnswer()">确认答案</button>
+            <button class="btn-next" id="btnNext" onclick="nextQuestion()" style="display:none;">下一题 →</button>
+        </div>
+    </div>
+
+    <div class="result" id="resultArea">
+        <div class="big-score">
+            <div class="num" id="finalScore">0</div>
+            <div class="label">总分（共 <span id="totalCountLabel">100</span> 题）</div>
+        </div>
+        <div class="stats-grid">
+            <div class="stat-card green"><div class="num" id="correctCount">0</div><div class="label">✅ 正确</div></div>
+            <div class="stat-card red"><div class="num" id="wrongCount">0</div><div class="label">❌ 错误</div></div>
+            <div class="stat-card blue"><div class="num" id="accuracy">0%</div><div class="label">正确率</div></div>
+        </div>
+        <div class="wrong-list" id="wrongList">
+            <h3>📖 错题回顾</h3>
+            <div id="wrongItems"></div>
+        </div>
+        <div class="actions" style="margin-top:20px;">
+            <button class="btn-restart" onclick="restartExam()">🔄 重新测试</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ==================== 数据加载 ====================
+const examQuestions = [
+  {
+    "id": 168,
+    "type": "单选",
+    "question": "构建新发展格局最本质的特征是（ ）。",
+    "options": [
+      "扩大内需",
+      "深化供给侧结构性改革",
+      "实现高水平的自立自强",
+      "促进国际大循环"
+    ],
+    "answer": "C",
+    "source": "《总体国家安全观学习纲要》"
+  },
+  {
+    "id": 37,
+    "type": "单选",
+    "question": "进一步全面深化改革，必须以什么为牵引？",
+    "options": [
+      "政治体制改革",
+      "经济体制改革",
+      "文化体制改革",
+      "社会体制改革"
+    ],
+    "answer": "B",
+    "source": "《中共中央关于进一步全面深化改革、推进中国式现代化的决定》"
+  },
+  {
+    "id": 78,
+    "question": "在接报一起电信诈骗案件案件中，根据事主提供的涉案微信号开展查询，应向国家大数据平台提交( )。",
+    "options": [
+      "呈请调取证据通知书报告书",
+      "呈请协助查询财产通知书报告书",
+      "协助查询财产通知书",
+      "调取证据通知书"
+    ],
+    "answer": "BC",
+    "type": "多选"
+  },
+  {
+    "id": 295,
+    "question": "研判地址标有“Huobi用户”的标签，使用该地址直接向huobi申请调证即可",
+    "answer": "正确",
+    "type": "判断",
+    "options": [
+      "正确",
+      "错误"
+    ]
+  },
+  {
+    "id": 220,
+    "question": "应当逮捕的犯罪嫌疑人在逃的，经市级以上公安机关负责人批准，可以发布通缉令，采取有效措施，追捕归案。",
+    "answer": "错误",
+    "type": "判断",
+    "options": [
+      "正确",
+      "错误"
+    ]
+  },
+  {
+    "id": 123,
+    "type": "单选",
+    "question": "习近平法治思想的重大意义包括（ ）。",
+    "options": [
+      "是马克思主义法治理论中国化时代化的最新成果",
+      "是中国特色社会主义法治理论的重大创新发展",
+      "是习近平新时代中国特色社会主义思想的重要组成部分",
+      "是新时代全面依法治国必须长期坚持的指导思想"
+    ],
+    "answer": "A",
+    "source": "《习近平法治思想学习纲要（2025年版）》"
+  },
+  {
+    "id": 21,
+    "type": "单选",
+    "question": "党的二十大报告提出“三个务必”，要求全党同志（ ）。",
+    "options": [
+      "务必不忘初心、牢记使命",
+      "务必谦虚谨慎、艰苦奋斗",
+      "务必敢于斗争、善于斗争",
+      "务必解放思想、实事求是"
+    ],
+    "answer": "D",
+    "source": "习近平：高举中国特色社会主义伟大旗帜 为全面建设社会主义现代化国家而团结奋斗——在中国共产党第二十次全国代表大会上的报告"
+  },
+  {
+    "id": 365,
+    "question": "侧链必须与主链使用相同的共识机制才能正常运行。",
+    "answer": "错误",
+    "type": "判断",
+    "options": [
+      "正确",
+      "错误"
+    ]
+  },
+  {
+    "id": 356,
+    "question": "以下哪些选项属于虚拟货币诈骗的常见形式？",
+    "options": [
+      "钓鱼网站",
+      "Ponzi 计划",
+      "无抵押贷款",
+      "冒充客服"
+    ],
+    "answer": "ABD",
+    "type": "多选"
+  },
+  {
+    "id": 238,
+    "question": "公安机关接到电信网络诈骗活动的报案或者电信网络诈骗活动，应当按照《中华人民共和国反诈法》的规定立案侦查",
+    "answer": "错误",
+    "type": "判断",
+    "options": [
+      "正确",
+      "错误"
+    ]
+  },
+  {
+    "id": 172,
+    "question": "()电信网络诈骗活动或者为电信网络诈骗活动提供相关帮助的违法犯罪人员，构成犯罪的，依法追究刑事责任。",
+    "options": [
+      "组织",
+      "策划",
+      "实施",
+      "参与"
+    ],
+    "answer": "ABCD",
+    "type": "多选"
+  },
+  {
+    "id": 223,
+    "question": "应当逮捕的犯罪嫌疑人在逃的，经办案部门负责人批准，可以发布通缉令，采取有效措施，追捕归案",
+    "answer": "错误",
+    "type": "判断",
+    "options": [
+      "正确",
+      "错误"
+    ]
+  },
+  {
+    "id": 74,
+    "question": "公安部云搜索系统中民航离港数据是实时数据。",
+    "answer": "错误",
+    "type": "判断",
+    "options": [
+      "正确",
+      "错误"
+    ]
+  },
+  {
+    "id": 221,
+    "question": "以下哪些币是稳定币",
+    "options": [
+      "TRX",
+      "USDT",
+      "USDC",
+      "Uni"
+    ],
+    "answer": "BC",
+    "type": "多选"
+  },
+  {
+    "id": 255,
+    "question": "以下和智能合约相关的有",
+    "options": [
+      "代币发行",
+      "OKX交易所充币地址",
+      "Stargate Bridge",
+      "Uniswap"
+    ],
+    "answer": "ACD",
+    "type": "多选"
+  },
+  {
+    "id": 234,
+    "question": "以下哪些是区块链的特征？",
+    "options": [
+      "去中心化",
+      "开放开源",
+      "匿名",
+      "中心化"
+    ],
+    "answer": "ABC",
+    "type": "多选"
+  },
+  {
+    "id": 129,
+    "question": "电诈案件中引流团队的发展，带动了哪些黑灰产业链",
+    "options": [
+      "养号",
+      "账号解封",
+      "批量注册",
+      "实名认证"
+    ],
+    "answer": "ABCD",
+    "type": "多选"
+  },
+  {
+    "id": 146,
+    "question": "电信网络诈骗犯罪地，除《最高人民法院、最高人民检察院、公安部关于办理电信网络诈骗等刑事案件适用法律若干问题的意见》规定的犯罪行为发生地和结果发生地外，还包括：（）",
+    "options": [
+      "用于犯罪活动的手机卡、流量卡、物联网卡的开立地、销售地、转移地、藏匿地；",
+      "用于犯罪活动的信用卡的开立地、销售地、转移地、藏匿地、使用地以及资金交易对手资金交付和汇出地；",
+      "用于犯罪活动的银行账户、非银行支付账户的开立地、销售地、使用地以及资金交易对手资金交付和汇出地；",
+      "用于犯罪活动的即时通讯信息、广告推广信息的发送地、接受地、到达地；"
+    ],
+    "answer": "ABCD",
+    "type": "多选"
+  },
+  {
+    "id": 291,
+    "question": "以下哪些虚拟货币是基于“稳定币”概念发行的？",
+    "options": [
+      "USDT",
+      "DAI",
+      "BTC",
+      "ETH"
+    ],
+    "answer": "AB",
+    "type": "多选"
+  },
+  {
+    "id": 225,
+    "question": "以下哪些钱包可以调证",
+    "options": [
+      "imtoken",
+      "Bitpie",
+      "Bixin",
+      "Coinbase wallet"
+    ],
+    "answer": "ABD",
+    "type": "多选"
+  },
+  {
+    "id": 77,
+    "type": "多选",
+    "question": "关于构建新发展格局，以下表述正确的有",
+    "options": [
+      "坚持扩大内需这个战略基点",
+      "以国内大循环为主体",
+      "坚持惠民生和促消费、投资于物和投资于人紧密结合",
+      "增强国内大循环内生动力和可靠性"
+    ],
+    "answer": "ABC",
+    "source": "习近平：在省部级主要领导干部学习贯彻党的二十届四中全会精神专题研讨班上的讲话"
+  },
+  {
+    "id": 236,
+    "question": "关于虚拟币传销案件，下面的说法错误的是",
+    "options": [
+      "在Pancake这样的去中心化交易所中可以完成层级返利",
+      "Defi类传销案件的层级关系可以在链上提取数据",
+      "通过交易所调证可以获得层级关系",
+      "上线地址向另一个地址首次转账代币可以形成层级"
+    ],
+    "answer": "C",
+    "type": "单选"
+  },
+  {
+    "id": 287,
+    "question": "私有链（Private Blockchain）适用于什么场景？",
+    "options": [
+      "公共加密货币交易",
+      "企业内部数据管理和共享",
+      "公共选举",
+      "区块链上的去中心化应用"
+    ],
+    "answer": "B",
+    "type": "单选"
+  },
+  {
+    "id": 208,
+    "question": "涉嫌故意杀人罪的王某被公安机关抓获后，住同一小区的黄女士、李女士向公安机关提供证言时称，二人均与王某有不正当性关系，因此在与王某一起过夜时，都听王某讲了他如何杀害被害人的事情。下列关于黄女士、李女士提供的证言，可以作为证据使用的是(??)。",
+    "options": [
+      "侦查人员同时询问证人黄女士、李女士获得的证言",
+      "B．侦查人员询问证人黄女士后，询问笔录没有交黄女士核对确认",
+      "C．因侦查人员懂外语，询问不通晓当地语言的外国人李女士时，没有提供翻译",
+      "D．对黄女士的询问笔录忘记填写询问人、记录人、询问的起止时间、地点，但能提供询问的视频作证"
+    ],
+    "answer": "D",
+    "type": "单选"
+  },
+  {
+    "id": 335,
+    "question": "下列哪条公链不能部署智能合约？",
+    "options": [
+      "BTC链",
+      "ETH链",
+      "TRON链",
+      "BSC链"
+    ],
+    "answer": "A",
+    "type": "单选"
+  },
+  {
+    "id": 327,
+    "question": "USDT是中国最主要的涉案虚拟币币种",
+    "answer": "正确",
+    "type": "判断",
+    "options": [
+      "正确",
+      "错误"
+    ]
+  },
+  {
+    "id": 43,
+    "question": "公安云搜索系统，通过身份证号关联的数据，在人员基本信息中不包括下列哪项数据。",
+    "options": [
+      "兵役情况",
+      "星座",
+      "手机号码",
+      "血型"
+    ],
+    "answer": "C",
+    "type": "单选"
+  },
+  {
+    "id": 83,
+    "question": "任何单位和个人不得非法制造、买卖、提供或使用下列设备、软件：（）",
+    "options": [
+      "电话卡批量插入设备",
+      "具有改变主叫号码、虚拟拨号、互联网电话违规接入公用电信网络等功能的设备、软件",
+      "批量账号、网络地址自动切换系统",
+      "批量接收提供短信验证、语音验证的平台"
+    ],
+    "answer": "ABCD",
+    "type": "多选"
+  },
+  {
+    "id": 308,
+    "question": "“激励机制”在区块链项目中通常是指什么？",
+    "options": [
+      "吸引用户参与的策略",
+      "维护系统稳定的奖励系统",
+      "增加交易费用的方式",
+      "促进市场竞争的手段"
+    ],
+    "answer": "B",
+    "type": "单选"
+  },
+  {
+    "id": 114,
+    "question": "手机四码中，IMEI（International Mobile Equipment Identity）是手机的“串号”，相当于移动电话的身份证。在大部分终端设备中都可以通过拨号输入（  ）来查询。",
+    "options": [
+      "*#06#",
+      "#*06#",
+      "#06#",
+      "*06#"
+    ],
+    "answer": "A",
+    "type": "单选"
+  },
+  {
+    "id": 358,
+    "question": "区块链的智能合约是自动执行的。",
+    "answer": "正确",
+    "type": "判断",
+    "options": [
+      "正确",
+      "错误"
+    ]
+  },
+  {
+    "id": 127,
+    "question": "电信网络诈骗，主要由哪几部分黑灰产业链组成",
+    "options": [
+      "引流团伙",
+      "洗钱团伙",
+      "技术开发维护团伙",
+      "实施诈骗的话务"
+    ],
+    "answer": "ABCD",
+    "type": "多选"
+  },
+  {
+    "id": 62,
+    "question": "公安部云搜索系统数据中，活动信息数据，通常民航离港数据少于民航订票数据。",
+    "answer": "正确",
+    "type": "判断",
+    "options": [
+      "正确",
+      "错误"
+    ]
+  },
+  {
+    "id": 90,
+    "question": "在美团平台查询涉案手机号外卖订单信息，查询结果的内容一定不包括（）",
+    "options": [
+      "收单人手机号",
+      "下单人手机号",
+      "收单人身份证号",
+      "订单行政区划"
+    ],
+    "answer": "C",
+    "type": "单选"
+  },
+  {
+    "id": 352,
+    "question": "以下哪种涉虚拟货币犯罪模式不属于典型类型？",
+    "options": [
+      "诈骗",
+      "赌博",
+      "漏洞攻击",
+      "传销"
+    ],
+    "answer": "C",
+    "type": "单选"
+  },
+  {
+    "id": 197,
+    "question": "甲乙丙三人流窜全国，在北京、河北等省、市制造了多起抢劫杀人案，成为公安部督办的重大复杂案件。之后，北京市某区警方将三人抓获并依法刑事拘留，后经批准三人被依法逮捕。下列关于侦查羁押期限的说法错误的是",
+    "options": [
+      "在侦查期间，发现另有重要罪行的，侦查羁押期限重新计算",
+      "逮捕后的侦查羁押期限不得超过2个月",
+      "因本案是流窜作案的重大复杂案件，不能在侦查羁押期限内侦查终结，可以直接经北京市人民检察院批准延长2个月",
+      "如三人不讲真实姓名、住址，身份不明的，侦查羁押期限自查清其身份之日起计算"
+    ],
+    "answer": "C",
+    "type": "单选"
+  },
+  {
+    "id": 300,
+    "question": "标有“合约”字样的地址意味着该地址存在智能合约",
+    "answer": "正确",
+    "type": "判断",
+    "options": [
+      "正确",
+      "错误"
+    ]
+  },
+  {
+    "id": 278,
+    "question": "证据，是指证明案件真实情况的一切事实。",
+    "answer": "错误",
+    "type": "判断",
+    "options": [
+      "正确",
+      "错误"
+    ]
+  },
+  {
+    "id": 153,
+    "type": "单选",
+    "question": "总体国家安全观的关键是（ ）。",
+    "options": [
+      "政治安全",
+      "人民安全",
+      "总体",
+      "统筹"
+    ],
+    "answer": "B",
+    "source": "《总体国家安全观学习纲要》"
+  },
+  {
+    "id": 42,
+    "type": "单选",
+    "question": "进一步全面深化改革的根本保证是什么？",
+    "options": [
+      "坚持改革开放",
+      "坚持人民民主专政",
+      "党的领导",
+      "坚持社会主义道路"
+    ],
+    "answer": "A",
+    "source": "《中共中央关于进一步全面深化改革、推进中国式现代化的决定》"
+  },
+  {
+    "id": 90,
+    "type": "多选",
+    "question": "公安工作的十六字总要求是什么？",
+    "options": [
+      "对党忠诚、服务人民、执法公正、纪律严明",
+      "信念坚定、为民服务、勤政务实、敢于担当",
+      "政治建警、改革强警、科技兴警、从严治警",
+      "忠诚干净、担当作为、无私奉献、纪律严明"
+    ],
+    "answer": "ABC",
+    "source": "《中共中央关于制定国民经济和社会发展第十五个五年规划的建议》"
+  },
+  {
+    "id": 166,
+    "question": "在受理电信诈骗案件时，如果事主将手机内的涉诈APP的安装包删除，则无法提取恢复。",
+    "answer": "错误",
+    "type": "判断",
+    "options": [
+      "正确",
+      "错误"
+    ]
+  },
+  {
+    "id": 95,
+    "type": "单选",
+    "question": "“四个铁一般”不包括以下哪项？",
+    "options": [
+      "铁一般的理想信念",
+      "铁一般的责任担当",
+      "铁一般的奉献精神",
+      "铁一般的纪律作风"
+    ],
+    "answer": "B",
+    "source": "习近平：坚持政治建警改革强警科技兴警从严治警 履行好党和人民赋予的新时代职责使命"
+  },
+  {
+    "id": 284,
+    "question": "以下哪些是虚拟货币交易所的主要功能？",
+    "options": [
+      "提供加密货币买卖服务",
+      "作为加密货币的托管服务",
+      "完全匿名交易",
+      "支持法定货币与加密货币兑换"
+    ],
+    "answer": "ABD",
+    "type": "多选"
+  },
+  {
+    "id": 154,
+    "question": "云搜系统不可以查询同出入境信息。",
+    "answer": "错误",
+    "type": "判断",
+    "options": [
+      "正确",
+      "错误"
+    ]
+  },
+  {
+    "id": 124,
+    "question": "电诈案件中，涉案卡存在跨行取款的情况，如何在线上查询获取交易网点信息（  ）",
+    "options": [
+      "通过银联系统查询涉案卡交易流水，获取交易网点信息",
+      "通过交易流水号在“国家大数据”平台查询交易信息",
+      "通过“国家大数据”平台查询涉案卡近期交易明细",
+      "查询涉案卡开户行，再去开户行网点查询"
+    ],
+    "answer": "A",
+    "type": "单选"
+  },
+  {
+    "id": 230,
+    "question": "以下哪个区块链地址开头是以太坊区块链的地址？",
+    "options": [
+      "T",
+      "Bc",
+      "1，3",
+      "0x"
+    ],
+    "answer": "D",
+    "type": "单选"
+  },
+  {
+    "id": 6,
+    "type": "单选",
+    "question": "党的二十大报告指出，中国式现代化的本质要求共有九条。下列不属于中国式现代化本质要求的是（ ）。",
+    "options": [
+      "坚持中国共产党领导",
+      "实现高质量发展",
+      "坚持深化改革开放",
+      "推动构建人类命运共同体"
+    ],
+    "answer": "C",
+    "source": "习近平：高举中国特色社会主义伟大旗帜 为全面建设社会主义现代化国家而团结奋斗——在中国共产党第二十次全国代表大会上的报告"
+  },
+  {
+    "id": 148,
+    "type": "单选",
+    "question": "领导干部要提高运用法治思维和法治方式的能力。下列关于法治思维和法治方式的说法正确的有（ ）。",
+    "options": [
+      "法治的第一位要求是守法律、重程序",
+      "要做到法定职责必须为、法无授权不可为",
+      "保护人民权益是法治的根本目的",
+      "领导干部可以不受监督地行使权力"
+    ],
+    "answer": "D",
+    "source": "《习近平法治思想学习纲要（2025年版）》"
+  },
+  {
+    "id": 271,
+    "question": "黄某住甲省A市B县，涉嫌网络诈骗犯罪，数额特别巨大，范围涉及多个省、市，取证困难。B县公安机关在逮捕黄某后，已报请甲省人民检察院批准延长过侦查羁押期限，经过5个月的侦查仍不能侦查终结，经送请B县人民检察院层报甲省人民检察院批准，可以再延长2个月侦查羁押期限。",
+    "answer": "正确",
+    "type": "判断",
+    "options": [
+      "正确",
+      "错误"
+    ]
+  },
+  {
+    "id": 12,
+    "question": "补采录入破案信息须准确填写（  ）",
+    "options": [
+      "破案方式",
+      "破案类型",
+      "侦破经过",
+      "抓获经过"
+    ],
+    "answer": "ABCD",
+    "type": "多选"
+  },
+  {
+    "id": 123,
+    "question": "在打击为境外提供呼转服务的犯罪团伙时，犯罪分子用两部手机就能提供呼转服务，具体需要的软硬件条件是( )",
+    "options": [
+      "需要远程操控软件",
+      "需要音频通话软件",
+      "需要音频转换线",
+      "需要视频转换线"
+    ],
+    "answer": "ABC",
+    "type": "多选"
+  },
+  {
+    "id": 294,
+    "question": "标有“合约”字样的地址不可调证",
+    "answer": "正确",
+    "type": "判断",
+    "options": [
+      "正确",
+      "错误"
+    ]
+  },
+  {
+    "id": 317,
+    "question": "在公安机关向交易所调证时，用户隐私的保护通常如何处理？",
+    "options": [
+      "公安可以随意查阅用户的所有数据",
+      "交易所根据法律规定，仅提供相关涉案数据",
+      "所有用户的数据都会公开",
+      "交易所拒绝所有调证请求以保护隐私"
+    ],
+    "answer": "B",
+    "type": "单选"
+  },
+  {
+    "id": 166,
+    "question": "证据确实、充分，应当符合以下条件：",
+    "options": [
+      "认定的案件事实都有证据证明",
+      "认定案件事实的证据均经法定程序查证属实",
+      "综合全案证据，对所认定事实已派出合理怀疑",
+      "认定案件事实都有嫌疑人承认"
+    ],
+    "answer": "ABC",
+    "type": "多选"
+  },
+  {
+    "id": 323,
+    "question": "USDT和USDC是仅存的两种稳定币",
+    "answer": "错误",
+    "type": "判断",
+    "options": [
+      "正确",
+      "错误"
+    ]
+  },
+  {
+    "id": 358,
+    "question": "在PoW共识机制中，矿工通过什么方式竞争记账权？",
+    "options": [
+      "持有更多代币",
+      "解复杂数学题",
+      "投票表决",
+      "系统自动分配"
+    ],
+    "answer": "B",
+    "type": "单选"
+  },
+  {
+    "id": 48,
+    "type": "单选",
+    "question": "在统筹发展和安全方面，《中共中央关于进一步全面深化改革、推进中国式现代化的决定》提出的新制度安排包括：",
+    "options": [
+      "建立人工智能安全监管制度",
+      "废除所有外资准入安全审查",
+      "全面放开网络安全管理",
+      "取消国家安全领域立法"
+    ],
+    "answer": "B",
+    "source": "《中共中央关于进一步全面深化改革、推进中国式现代化的决定》"
+  },
+  {
+    "id": 212,
+    "question": "以下哪项操作除了转账金额外会产生额外费用",
+    "options": [
+      "钱包之间的转账",
+      "同一交易所内两个账号内部转账",
+      "个人钱包充币到交易所",
+      "交易所提币到个人钱包"
+    ],
+    "answer": "ACD",
+    "type": "多选"
+  },
+  {
+    "id": 332,
+    "question": "助记词的主要作用是什么？",
+    "options": [
+      "生成私钥",
+      "加密交易",
+      "备份钱包",
+      "提高交易速度"
+    ],
+    "answer": "AC",
+    "type": "多选"
+  },
+  {
+    "id": 38,
+    "type": "单选",
+    "question": "新质生产力的核心特征是什么？",
+    "options": [
+      "高技术、高效能、高质量",
+      "高投入、高产出、高效益",
+      "高科技、高人才、高资本",
+      "高速度、高规模、高效率"
+    ],
+    "answer": "B",
+    "source": "《中共中央关于进一步全面深化改革、推进中国式现代化的决定》"
+  },
+  {
+    "id": 304,
+    "question": "下列关于加密货币的流动性，哪些说法是正确的？",
+    "options": [
+      "高流动性意味着易于买卖",
+      "所有加密货币流动性相同",
+      "流动性不足可能导致价格波动",
+      "交易量是流动性的重要指标"
+    ],
+    "answer": "ACD",
+    "type": "多选"
+  },
+  {
+    "id": 125,
+    "question": "公安部云搜索系统查询人员违法犯罪记录和机动车违章记录需要登录高级权限。",
+    "answer": "错误",
+    "type": "判断",
+    "options": [
+      "正确",
+      "错误"
+    ]
+  },
+  {
+    "id": 329,
+    "question": "目前Defi类案件，尤其是传销等Defi类案件多发币安智能链",
+    "answer": "正确",
+    "type": "判断",
+    "options": [
+      "正确",
+      "错误"
+    ]
+  },
+  {
+    "id": 3,
+    "question": "运营商DPI解析数据主要包含哪些类别？（）",
+    "options": [
+      "网络行为数据（网站浏览记录、软件活跃状态等）",
+      "通讯数据（话单、短信等）",
+      "位置数据（基站位置、经纬度等）",
+      "基础信息数据（用户姓名、身份证、登记地址等）"
+    ],
+    "answer": "ABCD",
+    "type": "多选"
+  },
+  {
+    "id": 82,
+    "type": "单选",
+    "question": "什么是党和国家事业发展的大敌？",
+    "options": [
+      "经济增长放缓",
+      "形式主义、官僚主义",
+      "国际竞争加剧",
+      "人口老龄化"
+    ],
+    "answer": "C",
+    "source": "《中共中央关于制定国民经济和社会发展第十五个五年规划的建议》"
+  },
+  {
+    "id": 6,
+    "question": "涉网案件的第一现场勘查就是被害人、嫌疑人涉案电子设备",
+    "answer": "正确",
+    "type": "判断",
+    "options": [
+      "正确",
+      "错误"
+    ]
+  },
+  {
+    "id": 156,
+    "question": "（）对物联网卡的使用建立监测预警机制。对存在异常使用情形的，应当采取暂停服务、重新核验身份和使用场景或者其他合同约定的处置措施。",
+    "options": [
+      "公安机关",
+      "检察机关",
+      "电信业务经营者",
+      "银行部门"
+    ],
+    "answer": "C",
+    "type": "单选"
+  },
+  {
+    "id": 208,
+    "question": "实施电信网络诈骗犯罪，数额难以查证，但发送诈骗信息五千条以上的，或者拨打诈骗电话五百人次以上的，以诈骗罪（未遂）定罪处罚。",
+    "answer": "正确",
+    "type": "判断",
+    "options": [
+      "正确",
+      "错误"
+    ]
+  },
+  {
+    "id": 246,
+    "question": "以下哪项不是TP钱包调证反馈的信息内容",
+    "options": [
+      "钱包内的其他地址",
+      "钱包地址所属区块链（比特币、以太坊...）",
+      "钱包注册人的手机号或邮箱地址",
+      "查询地址余额的IP"
+    ],
+    "answer": "C",
+    "type": "单选"
+  },
+  {
+    "id": 64,
+    "question": "在支付宝平台查询涉案人身份证号主体信息及交易流水，查询结果反馈的内容包括（）",
+    "options": [
+      "手机号",
+      "账户余额",
+      "收件地址",
+      "末次登录的时间"
+    ],
+    "answer": "ABCD",
+    "type": "多选"
+  },
+  {
+    "id": 207,
+    "question": "冒充国家机关工作人员实施电信网络诈骗犯罪，同时构成诈骗罪和招摇撞骗罪的，依照处罚较重的规定定罪处罚。",
+    "answer": "正确",
+    "type": "判断",
+    "options": [
+      "正确",
+      "错误"
+    ]
+  },
+  {
+    "id": 182,
+    "question": "公安机关破获一起团伙诈骗案件，扣押一批诈骗所得的汽车和金器，冻结犯罪嫌疑人银行账户中诈骗所得的人民币100万元。下列关于涉案财物和证据处理的说法正确的是",
+    "options": [
+      "扣押金器，应当拍照或者录像",
+      "公安机关对扣押、冻结的属于被害人的合法财产，应当及时返还",
+      "对作为证据使用的使用应当随案移送，对不宜移送的，应当将其清单、照片或者其他证明文件随案移送",
+      "人民法院作出的判决，应当对扣押、冻结的财物及其孳息作出处理"
+    ],
+    "answer": "ABCD",
+    "type": "多选"
+  },
+  {
+    "id": 308,
+    "question": "BTC价值高的原因之一是其生产需要消耗大量算力和电能",
+    "answer": "正确",
+    "type": "判断",
+    "options": [
+      "正确",
+      "错误"
+    ]
+  },
+  {
+    "id": 4,
+    "question": "刑专系统允许文职、辅警使用、查看系统信息内容。",
+    "answer": "错误",
+    "type": "判断",
+    "options": [
+      "正确",
+      "错误"
+    ]
+  },
+  {
+    "id": 290,
+    "question": "区块链的不可篡改特性是通过什么实现的？",
+    "options": [
+      "加密算法",
+      "共识机制",
+      "分布式存储",
+      "以上都是"
+    ],
+    "answer": "D",
+    "type": "单选"
+  },
+  {
+    "id": 18,
+    "type": "单选",
+    "question": "党的二十大报告指出，全面加强人民军队党的建设，确保（ ）。健全贯彻军委主席负责制体制机制。",
+    "options": [
+      "军队战斗力不断提升",
+      "枪杆子永远听党指挥",
+      "官兵思想高度统一",
+      "军事装备现代化"
+    ],
+    "answer": "B",
+    "source": "习近平：高举中国特色社会主义伟大旗帜 为全面建设社会主义现代化国家而团结奋斗——在中国共产党第二十次全国代表大会上的报告"
+  },
+  {
+    "id": 287,
+    "question": "通缉犯罪嫌疑人属于侦查措施。",
+    "answer": "正确",
+    "type": "判断",
+    "options": [
+      "正确",
+      "错误"
+    ]
+  },
+  {
+    "id": 17,
+    "question": "办案单位补采录入破案信息应准确填写（    ），破案简记应详细描述案件侦破的过程及人员抓获经过，严禁破案简记直接复用简要案情内容。",
+    "options": [
+      "破案方式",
+      "破案类型",
+      "破案简记",
+      "破案报告"
+    ],
+    "answer": "ABC",
+    "type": "多选"
+  },
+  {
+    "id": 32,
+    "question": "公安部云搜索系统支持英文双引号\"\"的精确搜索,如：\"成都市金牛区未来路34号3栋405\"。",
+    "answer": "正确",
+    "type": "判断",
+    "options": [
+      "正确",
+      "错误"
+    ]
+  },
+  {
+    "id": 350,
+    "question": "虚拟货币可以在任何国家合法使用。",
+    "answer": "错误",
+    "type": "判断",
+    "options": [
+      "正确",
+      "错误"
+    ]
+  },
+  {
+    "id": 406,
+    "question": "每个虚拟货币都有自己的区块链。",
+    "answer": "错误",
+    "type": "判断",
+    "options": [
+      "正确",
+      "错误"
+    ]
+  },
+  {
+    "id": 272,
+    "question": "Defi类传销和传统传销区别是",
+    "options": [
+      "Defi不需要推广团队",
+      "Defi没有后台数据",
+      "Defi不存在层级",
+      "Defi不需要代码技术"
+    ],
+    "answer": "B",
+    "type": "单选"
+  },
+  {
+    "id": 317,
+    "question": "链上交易的安全性保障措施有（）。",
+    "options": [
+      "加密技术",
+      "加密技术",
+      "智能合约",
+      "节点验证"
+    ],
+    "answer": "ABCD",
+    "type": "多选"
+  },
+  {
+    "id": 177,
+    "question": "下列侦查过程中收集证人证言的程序不符合规定的是",
+    "options": [
+      "在一起抢劫案中，侦查人员将目击事件发生的两兄弟召集在一起，并一并询问，最终确定了作案过程",
+      "在一起故意杀人案中，两名侦查人员未制作询问笔录，采用录音的方式记录了证人证言，并辅以制作说明和证人、侦查人员的签名",
+      "在一起故意伤害案中，侦查人员溶质被害人到宾馆接受询问",
+      "在一起故意伤害案中，辩护律师未经证人同意，向其收集与本案有关的材料"
+    ],
+    "answer": "ABCD",
+    "type": "多选"
+  },
+  {
+    "id": 75,
+    "question": "断卡针对哪类卡？（）",
+    "options": [
+      "电话卡",
+      "有储值功能的会员卡",
+      "贷记卡",
+      "借记卡"
+    ],
+    "answer": "ACD",
+    "type": "多选"
+  },
+  {
+    "id": 192,
+    "question": "公安机关办理刑事案件应当遵守法定程序，遵循有关技术标准，全面、客观、及时地收集、提取涉案电子数据，确保电子数据的真实、完整。",
+    "answer": "正确",
+    "type": "判断",
+    "options": [
+      "正确",
+      "错误"
+    ]
+  },
+  {
+    "id": 37,
+    "question": "公安部云搜索系统可以查询车辆档案，在车辆分布式查询中可以查询部级卡口，各地卡口数据，即车辆全国轨迹，轨迹中包括:数据来源、通过时间、号牌号码、卡口名称、卡口行政区划、方向类型、号牌种类、卡口经纬度。",
+    "answer": "正确",
+    "type": "判断",
+    "options": [
+      "正确",
+      "错误"
+    ]
+  },
+  {
+    "id": 53,
+    "question": "公安云搜索系统智能化分析中，分布式查询包括常住人口、暂住人口、旅馆住宿、在押人员以及（）",
+    "options": [
+      "核查记录",
+      "网吧上网",
+      "违法犯罪记录",
+      ""
+    ],
+    "answer": "B",
+    "type": "单选"
+  },
+  {
+    "id": 284,
+    "question": "去中心化交易所（DEX）与中心化交易所（CEX）的主要区别是什么？",
+    "options": [
+      "交易速度",
+      "资金是否由用户自己掌控",
+      "使用的货币种类",
+      "费用高低"
+    ],
+    "answer": "B",
+    "type": "单选"
+  },
+  {
+    "id": 113,
+    "type": "单选",
+    "question": "习近平总书记指出，中国特色社会主义法治道路的一个鲜明特点是（ ）。",
+    "options": [
+      "坚持党的领导",
+      "坚持依宪治国",
+      "坚持依法治国和以德治国相结合",
+      "坚持法律面前人人平等"
+    ],
+    "answer": "C",
+    "source": "《习近平法治思想学习纲要（2025年版）》"
+  },
+  {
+    "id": 188,
+    "question": "关于刑事强制措施，以下说法正确的是",
+    "options": [
+      "甲县公安局在乙县对犯罪嫌疑人李某执行拘留，押解李某回甲县的在途时间不计入拘留期限",
+      "乙在看守所以自伤、自残方法逃避侦查。因此，无论何种情况，均不得对乙取保候审",
+      "丙市办理一起恐怖活动犯罪案件，家住本市的某女性犯罪嫌疑人临产期已近，且可能毁灭证据。经本级公安机关负责人批准，可以指定居所监视居住",
+      "丁涉嫌危险驾驶罪，被取保候审后经多次传讯均无故不到案，虽然丁不可能被判处徒刑以上的刑罚，但公安机关仍可以提请检察机关批准逮捕丁"
+    ],
+    "answer": "D",
+    "type": "单选"
+  },
+  {
+    "id": 157,
+    "question": "（）组织领导本行政区域内反电信网络诈骗工作，确定反电信网络诈骗目标任务和工作机制，开展综合治理。",
+    "options": [
+      "国务院",
+      "地方各级人民政府",
+      "公安机关",
+      "人民法院、人民检察院"
+    ],
+    "answer": "B",
+    "type": "单选"
+  },
+  {
+    "id": 153,
+    "question": "对辨认经过和结果，应当制作辨认笔录，由（）签名。",
+    "options": [
+      "侦查人员",
+      "辨认人",
+      "犯罪嫌疑人",
+      "见证人"
+    ],
+    "answer": "ACD",
+    "type": "多选"
+  },
+  {
+    "id": 62,
+    "question": "支付宝查询，结果反馈中交易记录包括（）",
+    "options": [
+      "买家用户id",
+      "卖家用户id",
+      "卖家店铺名称",
+      "收货人地址"
+    ],
+    "answer": "ABCD",
+    "type": "多选"
+  },
+  {
+    "id": 47,
+    "question": "如果一个人的户籍从A地潜入到B地，组建新的家庭，使用公安部云搜索系统进行查询时，看不到原户籍家庭成员信息。",
+    "answer": "错误",
+    "type": "判断",
+    "options": [
+      "正确",
+      "错误"
+    ]
+  },
+  {
+    "id": 297,
+    "question": "虚拟货币的钱包地址是由什么组成的？",
+    "options": [
+      "数字和字母",
+      "汉字",
+      "符号",
+      "符号"
+    ],
+    "answer": "A",
+    "type": "单选"
+  },
+  {
+    "id": 70,
+    "type": "单选",
+    "question": "全会提出发展什么样的新时代中国特色社会主义文化？",
+    "options": [
+      "具有强大思想引领力、精神凝聚力、价值感召力、国际影响力",
+      "面向现代化、面向世界、面向未来",
+      "民族的、科学的、大众的",
+      "百花齐放、百家争鸣"
+    ],
+    "answer": "B",
+    "source": "《中共中央关于制定国民经济和社会发展第十五个五年规划的建议》"
+  },
+  {
+    "id": 121,
+    "type": "单选",
+    "question": "全面依法治国，关键在于坚持（ ）。",
+    "options": [
+      "党领导立法、保证执法、支持司法、带头守法",
+      "科学立法、严格执法、公正司法、全民守法",
+      "依法治国、依法执政、依法行政共同推进",
+      "法治国家、法治政府、法治社会一体建设"
+    ],
+    "answer": "D",
+    "source": "《习近平法治思想学习纲要（2025年版）》"
+  },
+  {
+    "id": 227,
+    "question": "根据刑事诉讼法规定，对于被刑事拘留的人，公安机关应当在拘留后（）进行讯问。",
+    "options": [
+      "24小时内",
+      "12小时内",
+      "立刻",
+      "48小时内"
+    ],
+    "answer": "D",
+    "type": "单选"
+  }
+];
+const TOTAL = examQuestions.length;
+
+let currentIndex = 0;
+let score = 0;
+let correctCount = 0;
+let wrongCount = 0;
+let userAnswers = [];
+let answered = [];
+let wrongList = [];
+let selectedMulti = [];
+
+// DOM 缓存
+const qType = document.getElementById('qType');
+const qNumber = document.getElementById('qNumber');
+const qText = document.getElementById('qText');
+const optionsContainer = document.getElementById('optionsContainer');
+const multiHint = document.getElementById('multiHint');
+const feedback = document.getElementById('feedback');
+const btnSubmit = document.getElementById('btnSubmit');
+const btnNext = document.getElementById('btnNext');
+const scoreNum = document.getElementById('scoreNum');
+const progressText = document.getElementById('progressText');
+const progressBar = document.getElementById('progressBar');
+const examArea = document.getElementById('examArea');
+const resultArea = document.getElementById('resultArea');
+
+// ==================== 获取正确答案索引 ====================
+function getCorrectIndex(q) {
+    if (q.type === '判断') {
+        if (q.answer === '正确') return 0;
+        if (q.answer === '错误') return 1;
+        if (q.answer === '√') return 0;
+        if (q.answer === '×') return 1;
+        return null;
+    }
+    if (q.type === '单选') {
+        const map = {'A':0, 'B':1, 'C':2, 'D':3};
+        return map[q.answer] !== undefined ? map[q.answer] : null;
+    }
+    if (q.type === '多选') {
+        const map = {'A':0, 'B':1, 'C':2, 'D':3};
+        return q.answer.split('').map(ch => map[ch]).filter(i => i !== undefined);
+    }
+    return null;
+}
+
+// ==================== 获取选项文本 ====================
+function getOptionText(q, idx) {
+    if (q.type === '判断') {
+        return idx === 0 ? '正确' : '错误';
+    }
+    if (q.options && q.options[idx]) {
+        return q.options[idx];
+    }
+    return String(idx);
+}
+
+// ==================== 初始化 ====================
+function init() {
+    document.getElementById('totalCountLabel').textContent = TOTAL;
+    currentIndex = 0;
+    score = 0;
+    correctCount = 0;
+    wrongCount = 0;
+    userAnswers = new Array(TOTAL).fill(null);
+    answered = new Array(TOTAL).fill(false);
+    wrongList = [];
+    selectedMulti = [];
+    examArea.style.display = 'block';
+    resultArea.classList.remove('show');
+    renderQuestion();
+    updateStats();
+}
+
+// ==================== 渲染题目 ====================
+function renderQuestion() {
+    const q = examQuestions[currentIndex];
+    if (!q) return;
+
+    qType.textContent = q.type;
+    qType.className = 'q-type ' + q.type;
+    qNumber.textContent = `第 ${currentIndex + 1} 题（共 ${TOTAL} 题）`;
+    qText.textContent = q.question;
+
+    optionsContainer.innerHTML = '';
+
+    if (q.type === '判断') {
+        const jOptions = ['正确', '错误'];
+        jOptions.forEach((text, idx) => {
+            const div = document.createElement('div');
+            div.className = 'option-item';
+            div.dataset.index = idx;
+            div.innerHTML = `<span class="letter">${'AB'[idx]}.</span> ${text}`;
+            div.onclick = () => handleOptionClick(idx);
+            optionsContainer.appendChild(div);
+        });
+    } else if (q.options && q.options.length > 0) {
+        const labels = ['A', 'B', 'C', 'D'];
+        q.options.forEach((opt, idx) => {
+            if (!opt) return;
+            const div = document.createElement('div');
+            div.className = 'option-item';
+            div.dataset.index = idx;
+            div.innerHTML = `<span class="letter">${labels[idx]}.</span> ${opt}`;
+            div.onclick = () => handleOptionClick(idx);
+            optionsContainer.appendChild(div);
+        });
+    }
+
+    if (q.type === '多选') {
+        multiHint.style.display = 'block';
+        btnSubmit.style.display = 'inline-block';
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = '确认答案';
+    } else {
+        multiHint.style.display = 'none';
+        btnSubmit.style.display = 'none';
+    }
+
+    feedback.classList.remove('show', 'correct', 'wrong');
+    feedback.textContent = '';
+
+    if (answered[currentIndex]) {
+        const selected = userAnswers[currentIndex];
+        const items = optionsContainer.querySelectorAll('.option-item');
+        const qType = examQuestions[currentIndex].type;
+
+        if (qType === '多选') {
+            items.forEach((item, idx) => {
+                if (selected && selected.includes(idx)) {
+                    item.classList.add('selected');
+                }
+            });
+            showFeedbackForCurrent();
+        } else {
+            items.forEach((item, idx) => {
+                if (idx === selected) {
+                    item.classList.add('selected');
+                    const isCorrect = selected === getCorrectIndex(q);
+                    if (isCorrect) {
+                        item.classList.add('correct');
+                    } else {
+                        item.classList.add('wrong');
+                        const correctIdx = getCorrectIndex(q);
+                        if (correctIdx !== null && items[correctIdx]) {
+                            items[correctIdx].classList.add('correct');
+                        }
+                    }
+                }
+            });
+            showFeedbackForCurrent();
+        }
+        items.forEach(item => item.classList.add('disabled'));
+        if (qType === '多选') {
+            btnSubmit.disabled = true;
+            btnSubmit.textContent = '已作答';
+        }
+        btnNext.style.display = 'inline-block';
+    } else {
+        optionsContainer.querySelectorAll('.option-item').forEach(item => item.classList.remove('disabled'));
+        btnNext.style.display = 'none';
+        if (q.type === '多选') {
+            btnSubmit.disabled = false;
+            btnSubmit.textContent = '确认答案';
+        }
+    }
+
+    updateStats();
+}
+
+// ==================== 选项点击 ====================
+function handleOptionClick(idx) {
+    if (answered[currentIndex]) return;
+    const q = examQuestions[currentIndex];
+
+    if (q.type === '多选') {
+        const items = optionsContainer.querySelectorAll('.option-item');
+        const item = items[idx];
+        if (item.classList.contains('selected')) {
+            item.classList.remove('selected');
+            selectedMulti = selectedMulti.filter(i => i !== idx);
+        } else {
+            item.classList.add('selected');
+            selectedMulti.push(idx);
+            selectedMulti.sort();
+        }
+        return;
+    }
+
+    const items = optionsContainer.querySelectorAll('.option-item');
+    items.forEach(el => el.classList.remove('selected'));
+    items[idx].classList.add('selected');
+
+    const correctIdx = getCorrectIndex(q);
+    const isCorrect = (idx === correctIdx);
+
+    userAnswers[currentIndex] = idx;
+    answered[currentIndex] = true;
+    if (isCorrect) {
+        correctCount++;
+        score += 1;
+    } else {
+        wrongCount++;
+        wrongList.push({
+            index: currentIndex,
+            question: q.question,
+            type: q.type,
+            options: q.options,
+            answer: q.answer,
+            userAnswer: idx,
+            userAnswerText: getOptionText(q, idx)
+        });
+    }
+
+    items.forEach(el => el.classList.add('disabled'));
+    if (isCorrect) {
+        items[idx].classList.add('correct');
+        showFeedback(true, '✅ 回答正确！');
+    } else {
+        items[idx].classList.add('wrong');
+        if (correctIdx !== null && items[correctIdx]) {
+            items[correctIdx].classList.add('correct');
+        }
+        showFeedback(false, '❌ 回答错误', q);
+    }
+
+    btnNext.style.display = 'inline-block';
+    if (q.type === '多选') {
+        btnSubmit.disabled = true;
+        btnSubmit.textContent = '已作答';
+    }
+    updateStats();
+}
+
+// ==================== 多选提交 ====================
+function submitAnswer() {
+    const q = examQuestions[currentIndex];
+    if (q.type !== '多选') return;
+    if (answered[currentIndex]) return;
+    if (selectedMulti.length === 0) {
+        alert('请至少选择一个选项');
+        return;
+    }
+
+    const items = optionsContainer.querySelectorAll('.option-item');
+    const correctIdx = getCorrectIndex(q);
+    const isCorrect = selectedMulti.length === correctIdx.length &&
+        selectedMulti.every((v, i) => v === correctIdx[i]);
+
+    userAnswers[currentIndex] = [...selectedMulti];
+    answered[currentIndex] = true;
+    if (isCorrect) {
+        correctCount++;
+        score += 1;
+    } else {
+        wrongCount++;
+        wrongList.push({
+            index: currentIndex,
+            question: q.question,
+            type: q.type,
+            options: q.options,
+            answer: q.answer,
+            userAnswer: selectedMulti,
+            userAnswerText: selectedMulti.map(i => 'ABCD'[i]).join('')
+        });
+    }
+
+    items.forEach(el => el.classList.add('disabled'));
+    if (isCorrect) {
+        items.forEach(el => {
+            if (el.classList.contains('selected')) el.classList.add('correct');
+        });
+        showFeedback(true, '✅ 回答正确！');
+    } else {
+        items.forEach(el => {
+            if (el.classList.contains('selected')) el.classList.add('wrong');
+        });
+        correctIdx.forEach(i => {
+            if (items[i]) items[i].classList.add('correct');
+        });
+        showFeedback(false, '❌ 回答错误', q);
+    }
+
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = '已作答';
+    btnNext.style.display = 'inline-block';
+    updateStats();
+}
+
+// ==================== 显示反馈 ====================
+function showFeedback(isCorrect, message, q) {
+    feedback.className = 'feedback show ' + (isCorrect ? 'correct' : 'wrong');
+    let detail = '';
+    if (!isCorrect && q) {
+        let correctText = q.answer;
+        if (q.type === '判断') {
+            correctText = q.answer === '正确' ? '正确' : '错误';
+        }
+        detail = `<div class="answer-detail">✅ 正确答案：${correctText}</div>`;
+    }
+    feedback.innerHTML = message + detail;
+}
+
+function showFeedbackForCurrent() {
+    const q = examQuestions[currentIndex];
+    const selected = userAnswers[currentIndex];
+    if (selected === null) return;
+
+    const correctIdx = getCorrectIndex(q);
+    let isCorrect;
+    if (q.type === '多选') {
+        isCorrect = selected.length === correctIdx.length &&
+            selected.every((v, i) => v === correctIdx[i]);
+    } else {
+        isCorrect = (selected === correctIdx);
+    }
+
+    const message = isCorrect ? '✅ 回答正确！' : '❌ 回答错误';
+    showFeedback(isCorrect, message, isCorrect ? null : q);
+}
+
+// ==================== 下一题 ====================
+function nextQuestion() {
+    if (currentIndex < TOTAL - 1) {
+        currentIndex++;
+        selectedMulti = [];
+        renderQuestion();
+        document.querySelector('.container').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+        showResult();
+    }
+}
+
+// ==================== 更新统计 ====================
+function updateStats() {
+    scoreNum.textContent = score;
+    const done = answered.filter(a => a === true).length;
+    progressText.textContent = `${done}/${TOTAL}`;
+    const pct = TOTAL > 0 ? (done / TOTAL * 100) : 0;
+    progressBar.style.width = pct + '%';
+}
+
+// ==================== 成绩单 ====================
+function showResult() {
+    examArea.style.display = 'none';
+    resultArea.classList.add('show');
+
+    document.getElementById('finalScore').textContent = score;
+    document.getElementById('correctCount').textContent = correctCount;
+    document.getElementById('wrongCount').textContent = wrongCount;
+    const acc = TOTAL > 0 ? Math.round((correctCount / TOTAL) * 100) : 0;
+    document.getElementById('accuracy').textContent = acc + '%';
+    document.getElementById('totalCountLabel').textContent = TOTAL;
+
+    const container = document.getElementById('wrongItems');
+    if (wrongList.length === 0) {
+        container.innerHTML = '<p style="color:#1a7f37;font-weight:500;">🎉 全部正确，太棒了！</p>';
+    } else {
+        let html = '';
+        wrongList.forEach((w, i) => {
+            let userAnsText = w.userAnswerText;
+            if (w.type === '判断') {
+                userAnsText = w.userAnswer === 0 ? '正确' : '错误';
+            } else if (w.type === '多选' && Array.isArray(w.userAnswer)) {
+                userAnsText = w.userAnswer.map(idx => 'ABCD'[idx]).join('');
+            } else if (w.type === '单选' && typeof w.userAnswer === 'number') {
+                userAnsText = 'ABCD'[w.userAnswer] || w.userAnswer;
+            }
+            html += `
+                <div class="wrong-item">
+                    <div class="w-q">${i+1}. ${w.question}</div>
+                    <div class="w-detail">❌ 你的答案：<span class="wrong-ans">${userAnsText}</span> ｜ ✅ 正确答案：<span class="right-ans">${w.answer}</span></div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+}
+
+// ==================== 重新测试 ====================
+function restartExam() {
+    location.reload();
+}
+
+// ==================== 启动 ====================
+init();
+</script>
+</body>
+</html>
